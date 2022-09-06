@@ -3,7 +3,7 @@ import numpy as np
 
 image = cv2.imread('./assets/neet-omr-sheet.webp')
 
-def read_answer(roi: any) -> list[int]:
+def read_answer(roi: any, n_questions: int) -> list[int]:
     
     '''
         Read answer mark from a specific region of the answer sheet and return a result as a list.
@@ -18,7 +18,7 @@ def read_answer(roi: any) -> list[int]:
     res = cv2.dilate(res, kernel = (3, 3))
 
     (contours, hierarchy) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    cv2.drawContours(roi, contours[1:], -1, (0, 255, 0), 2)
+    cv2.drawContours(roi, contours[1:n_questions], -1, (0, 255, 0), 2)
 
     readed = []
 
@@ -38,7 +38,7 @@ def read_answer(roi: any) -> list[int]:
         elif x in range(105, 120):
             readed.append((int(y // 33.5) + 1, 4))
             
-    read = [None] * (len(readed) + 1)
+    read = [None] * n_questions
     
     for n, choice in readed:
         read[n - 1] = choice
@@ -46,7 +46,7 @@ def read_answer(roi: any) -> list[int]:
     return read
         
 
-readed = read_answer(image[120:1315, 560:700])
+readed = read_answer(image[120:1315, 560:700], 35)
 # readed2 = read_answer(image[120:1315, 560 + 200:700 + 200])
     
 for n, choice in enumerate(readed, start = 1):
