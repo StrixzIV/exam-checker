@@ -149,9 +149,9 @@ def id_block_read(image: any) -> str:
     img = image[340:620, 300:370]
     
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    inp = cv2.GaussianBlur(grey, ksize = (15, 15), sigmaX = 25)
+    inp = cv2.GaussianBlur(grey, ksize = (5, 5), sigmaX = 1)
 
-    (_, res) = cv2.threshold(inp, 130, 255, cv2.THRESH_BINARY)
+    res = cv2.adaptiveThreshold(inp, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 1)
 
     res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 2)
     res = cv2.dilate(res, kernel = (3, 3))
@@ -162,14 +162,12 @@ def id_block_read(image: any) -> str:
         
         (contours, hierarchy) = cv2.findContours(res[:, :i * 20], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         
-        for cnt in contours[1:][::-1]:
+        for cnt in (contours[1:][::-1]):
             
             if len(id_str) == 3:
                 break
             
             (x, y, w, h) = cv2.boundingRect(cnt)
-            
-            print(x, y)
             
             if y in range(0, 26):
                 id_str += '1'
