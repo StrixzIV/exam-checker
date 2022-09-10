@@ -123,8 +123,11 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
 
 def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     
+    '''
+        Read answer from \'n\' blocks of the main answer sheet.
+    '''
+    
     answers = []
-    possible = {1, 2, 3, 4}
 
     if n_block <= 4:
         
