@@ -13,10 +13,10 @@ for img in imlist:
 
     answer_sheet = cv2.resize(find_paper(image), (827, 1669))
     student_id = id_block_read(answer_sheet)
-    answers = ans_block_read(answer_sheet, 4)
+    answers = ans_block_read(answer_sheet, 5)
 
     print(f'ID: {student_id}')
-    print(answers)
+    print(answers, len(answers))
 
     print('*' * 100)
 
