@@ -82,7 +82,7 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
     grey = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
     inp = cv2.GaussianBlur(grey, ksize = (15, 15), sigmaX = 1)
 
-    (_, res) = cv2.threshold(inp, 185, 255, cv2.THRESH_BINARY)
+    (_, res) = cv2.threshold(inp, 180, 255, cv2.THRESH_BINARY)
 
     res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 3)
     res = cv2.dilate(res, kernel = (3, 3))
@@ -101,16 +101,16 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
         if debug:
             print(x, y)
         
-        if x in range(0, 15):
+        if x in range(0, 20):
             readed.append((int(y // 27) + 1, 1))
             
-        elif x in range(20, 35):
+        elif x in range(20, 40):
             readed.append((int(y // 27) + 1, 2))
             
-        elif x in range(40, 55):
+        elif x in range(40, 60):
             readed.append((int(y // 27) + 1, 3))
             
-        elif x in range(60, 75):
+        elif x in range(60, 80):
             readed.append((int(y // 27) + 1, 4))
             
     read = [None] * n_questions
@@ -124,24 +124,167 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
 def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     
     answers = []
+    possible = {1, 2, 3, 4}
 
     if n_block <= 4:
         
-        for i in range(0, n_block):
+        for i in range(0, n_block - 1):
+
             img = image[690 + (i * 190):845 + (i * 190), 105:190]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
             answers.append(read_answer(img, 5, debug = False))
     
     elif n_block > 4 and n_block <= 8:
-        pass
+
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 105:190]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 245:330]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+            
+            answers.append(read)
     
     elif n_block > 8 and n_block <= 12:
-        pass
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 105:190]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 245:330]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 385:470]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
     
     elif n_block > 12 and n_block <= 16:
-        pass
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 105:190]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 245:330]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 385:470]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 385:470]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
     
     elif n_block > 16 and n_block <= 20:
-        pass
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 105:190]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 245:330]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 385:470]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 385:470]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
+        
+        for i in range(0, n_block - 1):
+
+            img = image[690 + (i * 190):845 + (i * 190), 525:610]
+            read = read_answer(img, 5, debug = False)
+
+            if set(read) == {None}:
+                break
+
+            answers.append(read_answer(img, 5, debug = False))
     
     elif n_block > 20:
         raise ValueError("n_block must be less than or equal to 20 blocks")
