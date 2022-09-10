@@ -81,15 +81,16 @@ def read_answer(roi: any, n_questions: int) -> list[int]:
     '''
     
     grey = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    inp = cv2.GaussianBlur(grey, ksize = (15, 15), sigmaX = 25)
+    inp = cv2.GaussianBlur(grey, ksize = (15, 15), sigmaX = 1)
 
-    (_, res) = cv2.threshold(inp, 110, 255, cv2.THRESH_BINARY)
+    (_, res) = cv2.threshold(inp, 180, 255, cv2.THRESH_BINARY)
 
     res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 2)
     res = cv2.dilate(res, kernel = (3, 3))
+    
+    cv2.imshow('a', res)
 
     (contours, hierarchy) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    cv2.drawContours(roi, contours[1:n_questions], -1, (0, 255, 0), 2)
 
     readed = []
 
@@ -97,17 +98,19 @@ def read_answer(roi: any, n_questions: int) -> list[int]:
         
         (x, y, w, h) = cv2.boundingRect(cnt)
         
+        print(x, y)
+        
         if x in range(0, 15):
-            readed.append((int(y // 33.5) + 1, 1))
+            readed.append((int(y // 27) + 1, 1))
             
-        elif x in range(35, 50):
-            readed.append((int(y // 33.5) + 1, 2))
+        elif x in range(20, 35):
+            readed.append((int(y // 27) + 1, 2))
             
-        elif x in range(70, 85):
-            readed.append((int(y // 33.5) + 1, 3))
+        elif x in range(40, 55):
+            readed.append((int(y // 27) + 1, 3))
             
-        elif x in range(105, 120):
-            readed.append((int(y // 33.5) + 1, 4))
+        elif x in range(60, 75):
+            readed.append((int(y // 27) + 1, 4))
             
     read = [None] * n_questions
     
