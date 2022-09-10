@@ -22,7 +22,7 @@ def biggest_contour(contours: any) -> any:
     return biggest
 
 
-def find_paper(image: any) -> any:
+def find_paper(image: np.ndarray) -> np.ndarray:
     
     '''
         Find an answer sheet in the image and auto cropped
@@ -54,10 +54,6 @@ def find_paper(image: any) -> any:
     input_points[2] = points[np.argmax(points_diff)]
 
     (top_left, top_right, bottom_right, bottom_left) = input_points
-    bottom_width = np.sqrt(((bottom_right[0] - bottom_left[0]) ** 2) + ((bottom_right[1] - bottom_left[1]) ** 2))
-    top_width = np.sqrt(((top_right[0] - top_left[0]) ** 2) + ((top_right[1] - top_left[1]) ** 2))
-    right_height = np.sqrt(((top_right[0] - bottom_right[0]) ** 2) + ((top_right[1] - bottom_right[1]) ** 2))
-    left_height = np.sqrt(((top_left[0] - bottom_left[0]) ** 2) + ((top_left[1] - bottom_left[1]) ** 2))
 
     # Output image size
     max_width = 827
@@ -74,7 +70,7 @@ def find_paper(image: any) -> any:
     return img_output
 
 
-def read_answer(roi: any, n_questions: int) -> list[int]:
+def read_answer(roi: np.ndarray, n_questions: int) -> list[int]:
     
     '''
         Read answer mark from a specific region of the answer sheet and return a result as a list.
@@ -117,7 +113,7 @@ def read_answer(roi: any, n_questions: int) -> list[int]:
     return read
 
 
-def ans_block_read(image: any, n_block: int) -> list:
+def ans_block_read(image: np.ndarray, n_block: int) -> list:
     
     if n_block <= 4:
         
@@ -140,7 +136,7 @@ def ans_block_read(image: any, n_block: int) -> list:
         raise ValueError("n_block must be less than or equal to 20 blocks")
     
     
-def id_block_read(image: any) -> str:
+def id_block_read(image: np.ndarray) -> str:
     
     '''
         Read the ID from the id section of the answer sheet image
@@ -202,7 +198,7 @@ def id_block_read(image: any) -> str:
     return id_str
 
 
-def rotate_image(image: any, angle: int) -> any:
+def rotate_image(image: np.ndarray, angle: int) -> any:
     
     '''
         Rotate image for n degree.
