@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+from uuid import uuid4
+from itertools import chain
+
 def biggest_contour(contours: any) -> any:
     
     biggest = np.array([])
@@ -79,13 +82,13 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
     grey = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
     inp = cv2.GaussianBlur(grey, ksize = (15, 15), sigmaX = 1)
 
-    (_, res) = cv2.threshold(inp, 180, 255, cv2.THRESH_BINARY)
+    (_, res) = cv2.threshold(inp, 185, 255, cv2.THRESH_BINARY)
 
-    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 2)
+    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 3)
     res = cv2.dilate(res, kernel = (3, 3))
     
     if debug:
-        cv2.imshow('a', res)
+        cv2.imshow(str(uuid4()), res)
 
     (contours, hierarchy) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
@@ -118,12 +121,15 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
     return read
 
 
-def ans_block_read(image: np.ndarray, n_block: int) -> list:
+def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     
+    answers = []
+
     if n_block <= 4:
         
-        for i in range(n_block):
-            img = image[:, :n_block]
+        for i in range(0, n_block):
+            img = image[690 + (i * 190):845 + (i * 190), 105:190]
+            answers.append(read_answer(img, 5, debug = False))
     
     elif n_block > 4 and n_block <= 8:
         pass
@@ -139,6 +145,8 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list:
     
     elif n_block > 20:
         raise ValueError("n_block must be less than or equal to 20 blocks")
+
+    return [j for i in answers for j in i]
     
     
 def id_block_read(image: np.ndarray) -> str:

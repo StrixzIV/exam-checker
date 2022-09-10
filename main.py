@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
 
-from utils import id_block_read, read_answer, find_paper
+from utils import id_block_read, read_answer, find_paper, ans_block_read
 
 imlist = ['./assets/ans_sheet1.jpg', './assets/ans_sheet2.jpg']
+
+print('*' * 100)
 
 for img in imlist:
 
@@ -11,9 +13,12 @@ for img in imlist:
 
     answer_sheet = cv2.resize(find_paper(image), (827, 1669))
     student_id = id_block_read(answer_sheet)
+    answers = ans_block_read(answer_sheet, 4)
 
     print(f'ID: {student_id}')
-    print(f'Answer: \n{read_answer(answer_sheet[690:845, 105:190], 5, debug = False)}')
+    print(answers)
+
+    print('*' * 100)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
