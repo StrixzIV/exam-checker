@@ -70,7 +70,7 @@ def find_paper(image: np.ndarray) -> np.ndarray:
     return img_output
 
 
-def read_answer(roi: np.ndarray, n_questions: int) -> list[int]:
+def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[int]:
     
     '''
         Read answer mark from a specific region of the answer sheet and return a result as a list.
@@ -84,7 +84,8 @@ def read_answer(roi: np.ndarray, n_questions: int) -> list[int]:
     res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 2)
     res = cv2.dilate(res, kernel = (3, 3))
     
-    cv2.imshow('a', res)
+    if debug:
+        cv2.imshow('a', res)
 
     (contours, hierarchy) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
@@ -94,7 +95,8 @@ def read_answer(roi: np.ndarray, n_questions: int) -> list[int]:
         
         (x, y, w, h) = cv2.boundingRect(cnt)
         
-        print(x, y)
+        if debug:
+            print(x, y)
         
         if x in range(0, 15):
             readed.append((int(y // 27) + 1, 1))
