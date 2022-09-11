@@ -271,7 +271,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
         
         for i in range(0, n_block - 1):
 
-            img = image[690 + (i * 190):845 + (i * 190), 385:470]
+            img = image[690 + (i * 190):845 + (i * 190), 525:610]
             read = read_answer(img, 5, debug = False)
 
             if set(read) == {None}:
@@ -281,7 +281,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
         
         for i in range(0, n_block - 1):
 
-            img = image[690 + (i * 190):845 + (i * 190), 525:610]
+            img = image[690 + (i * 190):845 + (i * 190), 665:750]
             read = read_answer(img, 5, debug = False)
 
             if set(read) == {None}:
