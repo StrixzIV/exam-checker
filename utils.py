@@ -296,7 +296,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     return [j for i in answers for j in i]
     
     
-def id_block_read(image: np.ndarray) -> str:
+def id_block_read(image: np.ndarray, debug: bool = True) -> str:
     
     '''
         Read the ID from the id section of the answer sheet image
@@ -311,8 +311,6 @@ def id_block_read(image: np.ndarray) -> str:
 
     res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 4)
     res = cv2.dilate(res, kernel = (5, 5), iterations = 3)
-    
-    # res = cv2.Canny(res, 10, 20)
 
     id_str = ''
 
@@ -320,8 +318,9 @@ def id_block_read(image: np.ndarray) -> str:
         
         (contours, hierarchy) = cv2.findContours(res[:, (i - 1) * 21:i * 21], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         
-        cv2.imshow(str(uuid4()), res[:, (i - 1) * 21:i * 21])
-        cv2.waitKey(0)
+        if debug:
+            cv2.imshow(str(uuid4()), res[:, (i - 1) * 21:i * 21])
+            cv2.waitKey(0)
         
         for cnt in (contours[1:][::-1]):
             

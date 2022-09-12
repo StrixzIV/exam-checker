@@ -12,7 +12,7 @@ for img in imlist:
     image = cv2.imread(img)
 
     answer_sheet = cv2.resize(find_paper(image), (827, 1669))
-    student_id = id_block_read(answer_sheet)
+    student_id = id_block_read(answer_sheet, debug = False)
     answers = ans_block_read(answer_sheet, 5)
 
     print(f'ID: {student_id}, {img}')
