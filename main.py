@@ -1,9 +1,9 @@
+import os
 import cv2
-import numpy as np
 
 from utils import id_block_read, read_answer, find_paper, ans_block_read
 
-imlist = ['./assets/ans_sheet1.jpg', './assets/ans_sheet2.jpg']
+imlist = ['./assets/images/' + path for path in os.listdir('./assets/images')]
 
 print('*' * 100)
 
@@ -15,10 +15,10 @@ for img in imlist:
     student_id = id_block_read(answer_sheet)
     answers = ans_block_read(answer_sheet, 5)
 
-    print(f'ID: {student_id}')
+    print(f'ID: {student_id}, {img}')
     print(answers, len(answers))
 
     print('*' * 100)
 
-cv2.waitKey(0)
+# cv2.waitKey(0)
 cv2.destroyAllWindows()

@@ -82,13 +82,14 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
     grey = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
     inp = cv2.GaussianBlur(grey, ksize = (15, 15), sigmaX = 1)
 
-    (_, res) = cv2.threshold(inp, 180, 255, cv2.THRESH_BINARY)
+    (_, res) = cv2.threshold(inp, 185, 255, cv2.THRESH_BINARY)
 
     res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 3)
     res = cv2.dilate(res, kernel = (3, 3))
     
     if debug:
         cv2.imshow(str(uuid4()), res)
+        cv2.waitKey(0)
 
     (contours, hierarchy) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
@@ -129,7 +130,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     
     answers = []
 
-    if n_block <= 4:
+    if n_block <= 5:
         
         for i in range(0, n_block - 1):
 
@@ -141,7 +142,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
 
             answers.append(read_answer(img, 5, debug = False))
     
-    elif n_block > 4 and n_block <= 8:
+    elif n_block > 5 and n_block <= 9:
 
         for i in range(0, n_block - 1):
 
@@ -163,7 +164,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
             
             answers.append(read)
     
-    elif n_block > 8 and n_block <= 12:
+    elif n_block > 9 and n_block <= 13:
         
         for i in range(0, n_block - 1):
 
@@ -195,7 +196,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
 
             answers.append(read_answer(img, 5, debug = False))
     
-    elif n_block > 12 and n_block <= 16:
+    elif n_block > 13 and n_block <= 17:
         
         for i in range(0, n_block - 1):
 
@@ -237,7 +238,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
 
             answers.append(read_answer(img, 5, debug = False))
     
-    elif n_block > 16 and n_block <= 20:
+    elif n_block > 17 and n_block <= 21:
         
         for i in range(0, n_block - 1):
 
@@ -289,7 +290,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
 
             answers.append(read_answer(img, 5, debug = False))
     
-    elif n_block > 20:
+    elif n_block > 21:
         raise ValueError("n_block must be less than or equal to 20 blocks")
 
     return [j for i in answers for j in i]
@@ -301,21 +302,26 @@ def id_block_read(image: np.ndarray) -> str:
         Read the ID from the id section of the answer sheet image
     '''
     
-    img = image[340:620, 300:370]
+    img = image[340:625, 300:370]
     
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    inp = cv2.GaussianBlur(grey, ksize = (5, 5), sigmaX = 1)
+    inp = cv2.GaussianBlur(grey, ksize = (3, 3), sigmaX = 1)
 
-    res = cv2.adaptiveThreshold(inp, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 1)
+    (_, res) = cv2.threshold(inp, 178, 255, cv2.THRESH_BINARY)
 
-    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 2)
-    res = cv2.dilate(res, kernel = (3, 3))
+    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 4)
+    res = cv2.dilate(res, kernel = (5, 5), iterations = 3)
+    
+    # res = cv2.Canny(res, 10, 20)
 
     id_str = ''
 
     for i in range(1, 4):
         
-        (contours, hierarchy) = cv2.findContours(res[:, :i * 20], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        (contours, hierarchy) = cv2.findContours(res[:, (i - 1) * 21:i * 21], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        
+        cv2.imshow(str(uuid4()), res[:, (i - 1) * 21:i * 21])
+        cv2.waitKey(0)
         
         for cnt in (contours[1:][::-1]):
             
@@ -323,6 +329,8 @@ def id_block_read(image: np.ndarray) -> str:
                 break
             
             (x, y, w, h) = cv2.boundingRect(cnt)
+            
+            print(y)
             
             if y in range(0, 26):
                 id_str += '1'
@@ -354,7 +362,7 @@ def id_block_read(image: np.ndarray) -> str:
             elif y in range(226, 261):
                 id_str += '0'
     
-    return id_str
+    return int(id_str)
 
 
 def rotate_image(image: np.ndarray, angle: int) -> any:
