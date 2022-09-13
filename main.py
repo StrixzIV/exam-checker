@@ -29,7 +29,7 @@ for img in tqdm(imlist, unit = 'Sheet'):
     data = {'id': student_id, 'answers': answers}
     datasets.append(data.copy())
 
-datasets = sorted(datasets, key = lambda data: data['id'])
+datasets = sorted(datasets, key = lambda data: data['id'])[1:]
 
 print(f'Correct answers(ID = 0): {correct_ans}')
 print(datasets)
