@@ -329,7 +329,8 @@ def id_block_read(image: np.ndarray, debug: bool = True) -> int:
             
             (x, y, w, h) = cv2.boundingRect(cnt)
             
-            print(y)
+            if debug:
+                print(y)
             
             if y in range(0, 26):
                 id_str += '1'
