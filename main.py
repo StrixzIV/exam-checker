@@ -1,5 +1,6 @@
 import os
 import cv2
+import time
 
 import numpy as np
 import pandas as pd
@@ -7,6 +8,8 @@ import pandas as pd
 from tqdm import tqdm
 from rich import print
 from image_utils import id_block_read, find_paper, ans_block_read
+
+start_time = time.process_time()
 
 imlist = ['./assets/images/' + path for path in os.listdir('./assets/images')]
 
@@ -52,3 +55,8 @@ df = pd.DataFrame(datasets)
 df['pass'] = ["Pass" if d >= 6 else "Not pass" for d in df['correct']]
 
 df.to_excel('out.xlsx', index = False)
+
+elapsed_time = time.process_time() - start_time
+
+print(f'Done! Time elapsed: {elapsed_time:.2f} secs')
+print(f'Exporting data to excel spreadsheet at: {os.path.abspath("./out.xlsx")}')
