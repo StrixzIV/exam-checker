@@ -10,7 +10,9 @@ imlist = ['./assets/images/' + path for path in os.listdir('./assets/images')]
 correct_ans = []
 datasets = []
 
-for img in imlist:
+print('Reading answers from the sheet...')
+
+for img in tqdm(imlist, unit = 'Sheet'):
 
     image = cv2.imread(img)
 
