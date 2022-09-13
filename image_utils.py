@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 
 from uuid import uuid4
-from itertools import chain
 
 def biggest_contour(contours: any) -> any:
     
