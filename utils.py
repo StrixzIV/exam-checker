@@ -296,7 +296,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     return [j for i in answers for j in i]
     
     
-def id_block_read(image: np.ndarray, debug: bool = True) -> str:
+def id_block_read(image: np.ndarray, debug: bool = True) -> int:
     
     '''
         Read the ID from the id section of the answer sheet image
