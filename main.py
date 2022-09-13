@@ -3,7 +3,7 @@ import cv2
 
 from tqdm import tqdm
 from rich import print
-from utils import id_block_read, read_answer, find_paper, ans_block_read
+from image_utils import id_block_read, find_paper, ans_block_read
 
 imlist = ['./assets/images/' + path for path in os.listdir('./assets/images')]
 
