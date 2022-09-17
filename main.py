@@ -9,6 +9,8 @@ from tqdm import tqdm
 from rich import print
 from image_utils import id_block_read, find_paper, ans_block_read
 
+pass_score = 6
+
 start_time = time.process_time()
 
 imlist = ['./assets/images/' + path for path in os.listdir('./assets/images')]
@@ -52,7 +54,7 @@ for data in datasets:
     data['incorrect'] = count[0]
     
 df = pd.DataFrame(datasets)
-df['pass'] = ["Pass" if d >= 6 else "Not pass" for d in df['correct']]
+df['pass'] = ["Pass" if d >= pass_score else "Not pass" for d in df['correct']]
 
 df.to_excel('out.xlsx', index = False)
 
