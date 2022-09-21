@@ -2,7 +2,7 @@
 
 A Final project for semester 1 of E-AI SPSM. 
 
-**Exam checker** an answer sheet marker build with (OpenCV)[]
+**Exam checker** an answer sheet marker build with **(OpenCV)[https://github.com/opencv/opencv-python]**.
 
 ## Installation
 
