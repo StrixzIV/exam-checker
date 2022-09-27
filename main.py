@@ -38,7 +38,6 @@ datasets = sorted(datasets, key = lambda data: data['id'])[1:]
 
 print(f'Correct answers(ID = 0): {correct_ans}')
 print(datasets)
-# cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 for (idx, data) in enumerate(datasets):
