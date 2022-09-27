@@ -25,10 +25,14 @@ pip install --upgrade -r requirements.txt
 
 ## How to use
 
-*Please make sure you have already install all of the required dependcies first. If not please follow **[this](#Dependentcies-&-tools)** instructions.
+* Please make sure you have already install all of the required dependcies first. If not please follow Dependentcies & tools section.
 
 1. Take an image of the answer sheet you want to mark
 2. Put the images in **[./assets/images/](./assets/images/)**
 3. Run the program by running `python main.py`
 
 The output excel spread sheet will be stored at the project's root directory.
+
+## License
+
+* This project is licensed under the **[MIT License](./LICENSE.md)**.
