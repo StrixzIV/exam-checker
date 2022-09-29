@@ -364,7 +364,7 @@ def id_block_read(image: np.ndarray, debug: bool = True) -> int:
     return int(id_str)
 
 
-def rotate_image(image: np.ndarray, angle: int) -> any:
+def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
     
     '''
         Rotate image for n degree.
