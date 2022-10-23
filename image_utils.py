@@ -8,14 +8,14 @@ def biggest_contour(contours: any) -> any:
     biggest = np.array([])
     max_area = 0
     
-    for i in contours:
+    for contour in contours:
         
-        area = cv2.contourArea(i)
+        area = cv2.contourArea(contour)
         
         if area > 1000:
             
-            peri = cv2.arcLength(i, True)
-            approx = cv2.approxPolyDP(i, 0.015 * peri, True)
+            peri = cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, 0.015 * peri, True)
             
             if area > max_area and len(approx) == 4:
                 biggest = approx
@@ -30,13 +30,16 @@ def find_paper(image: np.ndarray) -> np.ndarray:
         Find an answer sheet in the image and auto cropped
     '''
     
+    # define readed answersheet image output size
+    (max_width, max_height) = (827, 1669)
+    
     img_original = image.copy()
     
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.bilateralFilter(gray, 20, 30, 30)
     edged = cv2.Canny(gray, 10, 20)
 
-    (contours, hierarchy) = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    (contours, _) = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
     biggest = biggest_contour(contours)
@@ -54,13 +57,6 @@ def find_paper(image: np.ndarray) -> np.ndarray:
     points_diff = np.diff(points, axis=1)
     input_points[1] = points[np.argmin(points_diff)]
     input_points[2] = points[np.argmax(points_diff)]
-
-    (top_left, top_right, bottom_right, bottom_left) = input_points
-
-    # Output image size
-    max_width = 827
-    # max_height = max(int(right_height), int(left_height))
-    max_height = 1669
 
     # Desired points values in the output image
     converted_points = np.float32([[0, 0], [max_width, 0], [0, max_height], [max_width, max_height]])
@@ -90,13 +86,13 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
         cv2.imshow(str(uuid4()), res)
         cv2.waitKey(0)
 
-    (contours, hierarchy) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    (contours, _) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     readed = []
 
     for cnt in contours[1:][::-1]:
         
-        (x, y, w, h) = cv2.boundingRect(cnt)
+        (x, y, _w, _h) = cv2.boundingRect(cnt)
         
         if debug:
             print(x, y)
@@ -115,7 +111,7 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
             
     read = [None] * n_questions
     
-    for n, choice in readed:
+    for (n, choice) in readed:
         read[n - 1] = choice
     
     return read
@@ -315,7 +311,7 @@ def id_block_read(image: np.ndarray, debug: bool = True) -> int:
 
     for i in range(1, 4):
         
-        (contours, hierarchy) = cv2.findContours(res[:, (i - 1) * 21:i * 21], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        (contours, _) = cv2.findContours(res[:, (i - 1) * 21:i * 21], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         
         if debug:
             cv2.imshow(str(uuid4()), res[:, (i - 1) * 21:i * 21])
