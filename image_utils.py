@@ -3,7 +3,7 @@ import numpy as np
 
 from uuid import uuid4
 
-def biggest_contour(contours: any) -> any:
+def biggest_contour(contours: np.ndarray[np.int32]) -> np.ndarray[np.int32]:
     
     biggest = np.array([])
     max_area = 0
@@ -24,7 +24,7 @@ def biggest_contour(contours: any) -> any:
     return biggest
 
 
-def find_paper(image: np.ndarray) -> np.ndarray:
+def find_paper(image: np.ndarray[np.uint8]) -> np.ndarray[np.uint8]:
     
     '''
         Find an answer sheet in the image and auto cropped
@@ -68,7 +68,7 @@ def find_paper(image: np.ndarray) -> np.ndarray:
     return img_output
 
 
-def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[int]:
+def read_answer(roi: np.ndarray[np.uint8], n_questions: int, debug: bool = True) -> list[int]:
     
     '''
         Read answer mark from a specific region of the answer sheet and return a result as a list.
@@ -117,7 +117,7 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
     return read
 
 
-def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
+def ans_block_read(image: np.ndarray[np.uint8], n_block: int) -> list[int]:
     
     '''
         Read answer from \'n\' blocks of the main answer sheet.
@@ -291,7 +291,7 @@ def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     return [j for i in answers for j in i]
     
     
-def id_block_read(image: np.ndarray, debug: bool = True) -> int:
+def id_block_read(image: np.ndarray[np.uint8], debug: bool = True) -> int:
     
     '''
         Read the ID from the id section of the answer sheet image
@@ -360,7 +360,7 @@ def id_block_read(image: np.ndarray, debug: bool = True) -> int:
     return int(id_str)
 
 
-def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
+def rotate_image(image: np.ndarray[np.uint8], angle: int) -> np.ndarray[np.uint8]:
     
     '''
         Rotate image for n degree.
