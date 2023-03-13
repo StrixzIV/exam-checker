@@ -84,25 +84,18 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
 
     readed = []
 
-    for cnt in contours[1:][::-1]:
+    for cnt in contours[::-1]:
         
         (x, y, _w, _h) = cv2.boundingRect(cnt)
         
         if debug:
             print(x, y)
         
-        if x in range(0, 20):
-            readed.append((int(y // 27) + 1, 1))
-            
-        elif x in range(20, 40):
-            readed.append((int(y // 27) + 1, 2))
-            
-        elif x in range(40, 60):
-            readed.append((int(y // 27) + 1, 3))
-            
-        elif x in range(60, 80):
-            readed.append((int(y // 27) + 1, 4))
-            
+        question_idx = int(y // 27)
+        choice_idx = (x - 1) // 20
+        
+        readed.append((question_idx + 1, choice_idx + 1))
+    
     read = [None] * n_questions
     
     for (n, choice) in readed:
