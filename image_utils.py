@@ -3,28 +3,22 @@ import numpy as np
 
 from uuid import uuid4
 
-def biggest_contour(contours: np.ndarray[np.int32]) -> np.ndarray[np.int32]:
+def biggest_contour(contours: np.ndarray) -> np.ndarray:
     
-    biggest = np.array([])
-    max_area = 0
+    contours = [contour for contour in contours if cv2.contourArea(contour) > 1000]
     
-    for contour in contours:
+    if len(contours) > 0:
+        largest_contour = max(contours, key=cv2.contourArea)
+        peri = cv2.arcLength(largest_contour, True)
+        approx = cv2.approxPolyDP(largest_contour, 0.015 * peri, True)
         
-        area = cv2.contourArea(contour)
-        
-        if area > 1000:
-            
-            peri = cv2.arcLength(contour, True)
-            approx = cv2.approxPolyDP(contour, 0.015 * peri, True)
-            
-            if area > max_area and len(approx) == 4:
-                biggest = approx
-                max_area = area
-                
-    return biggest
+        if len(approx) == 4:
+            return approx
+    
+    return None
 
 
-def find_paper(image: np.ndarray[np.uint8]) -> np.ndarray[np.uint8]:
+def find_paper(image: np.ndarray) -> np.ndarray:
     
     '''
         Find an answer sheet in the image and auto cropped
@@ -68,7 +62,7 @@ def find_paper(image: np.ndarray[np.uint8]) -> np.ndarray[np.uint8]:
     return img_output
 
 
-def read_answer(roi: np.ndarray[np.uint8], n_questions: int, debug: bool = True) -> list[int]:
+def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[int]:
     
     '''
         Read answer mark from a specific region of the answer sheet and return a result as a list.
@@ -117,7 +111,7 @@ def read_answer(roi: np.ndarray[np.uint8], n_questions: int, debug: bool = True)
     return read
 
 
-def ans_block_read(image: np.ndarray[np.uint8], n_block: int) -> list[int]:
+def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
     
     '''
         Read answer from \'n\' blocks of the main answer sheet.
@@ -291,7 +285,7 @@ def ans_block_read(image: np.ndarray[np.uint8], n_block: int) -> list[int]:
     return [j for i in answers for j in i]
     
     
-def id_block_read(image: np.ndarray[np.uint8], debug: bool = True) -> int:
+def id_block_read(image: np.ndarray, debug: bool = True) -> int:
     
     '''
         Read the ID from the id section of the answer sheet image
@@ -360,7 +354,7 @@ def id_block_read(image: np.ndarray[np.uint8], debug: bool = True) -> int:
     return int(id_str)
 
 
-def rotate_image(image: np.ndarray[np.uint8], angle: int) -> np.ndarray[np.uint8]:
+def rotate_image(image: np.ndarray, angle: int) -> np.ndarray:
     
     '''
         Rotate image for n degree.
