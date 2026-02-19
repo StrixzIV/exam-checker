@@ -93,6 +93,12 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
         
         question_idx = int(y // 27)
         choice_idx = (x - 1) // 20
+
+        if question_idx < 0 or question_idx >= n_questions:
+            continue
+        
+        if choice_idx < 0 or choice_idx > 3:
+            continue
         
         readed.append((question_idx + 1, choice_idx + 1))
     
@@ -104,179 +110,79 @@ def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[i
     return read
 
 
-def ans_block_read(image: np.ndarray, n_block: int) -> list[int]:
+def ans_block_read(image: np.ndarray, n_questions: int = 100) -> list[int]:
     
     '''
-        Read answer from \'n\' blocks of the main answer sheet.
+        Read answers from all blocks of the main answer sheet.
+
+        The sheet is laid out as a grid:
+          - 5 columns  (each covering 20 questions)
+          - 4 row-groups per column (each covering 5 questions)
+        Total: 5 × 4 × 5 = 100 questions
+
+        Column x-ranges (left edge → right edge in the warped 827×1669 image):
+          Col 1 (Q  1-20 ): x 105:190
+          Col 2 (Q 21-40 ): x 245:330
+          Col 3 (Q 41-60 ): x 385:470
+          Col 4 (Q 61-80 ): x 525:610
+          Col 5 (Q 81-100): x 665:750
+
+        Row-group y-ranges (top → bottom):
+          Group 1 (rows  1- 5 per col): y  690:845
+          Group 2 (rows  6-10 per col): y  880:1035
+          Group 3 (rows 11-15 per col): y 1070:1225
+          Group 4 (rows 16-20 per col): y 1260:1415
+
+        n_questions: how many questions to read (default 100).
+                     Must be a multiple of 5 and <= 100.
     '''
-    
+
+    if n_questions > 100 or n_questions < 1:
+        raise ValueError("n_questions must be between 1 and 100.")
+
+    # X pixel ranges for each of the 5 answer columns
+    col_x_ranges = [
+        (105, 190),   # Column 1: Q  1–20
+        (245, 330),   # Column 2: Q 21–40
+        (385, 470),   # Column 3: Q 41–60
+        (525, 610),   # Column 4: Q 61–80
+        (665, 750),   # Column 5: Q 81–100
+    ]
+
+    # Y pixel ranges for each of the 4 row-groups inside every column.
+    # We trim 8px off the top of each range to avoid capturing the horizontal
+    # separator line that sits at the very top of each group block — that line
+    # was being detected as a contour at y≈0, x≈0, corrupting question 1 in
+    # every block with a spurious choice of 0.
+    row_y_ranges = [
+        ( 698,  845),  # Row-group 1: questions  1– 5 within each column
+        ( 888, 1035),  # Row-group 2: questions  6–10 within each column
+        (1078, 1225),  # Row-group 3: questions 11–15 within each column
+        (1268, 1415),  # Row-group 4: questions 16–20 within each column
+    ]
+
     answers = []
 
-    if n_block <= 5:
-        
-        for i in range(0, n_block - 1):
+    for (x_start, x_end) in col_x_ranges:
+        for (y_start, y_end) in row_y_ranges:
 
-            img = image[690 + (i * 190):845 + (i * 190), 105:190]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
+            if len(answers) >= n_questions:
                 break
 
-            answers.append(read_answer(img, 5, debug = False))
-    
-    elif n_block > 5 and n_block <= 9:
+            roi = image[y_start:y_end, x_start:x_end]
+            block_answers = read_answer(roi, 5, debug=False)
 
-        for i in range(0, n_block - 1):
+            # Stop early if the entire block is blank (no marks at all)
+            if set(block_answers) == {None}:
+                answers.extend([None] * 5)
+            else:
+                answers.extend(block_answers)
 
-            img = image[690 + (i * 190):845 + (i * 190), 105:190]
-            read = read_answer(img, 5, debug = False)
+        if len(answers) >= n_questions:
+            break
 
-            if set(read) == {None}:
-                break
+    return answers[:n_questions]
 
-            answers.append(read_answer(img, 5, debug = False))
-
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 245:330]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-            
-            answers.append(read)
-    
-    elif n_block > 9 and n_block <= 13:
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 105:190]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 245:330]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 385:470]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-    
-    elif n_block > 13 and n_block <= 17:
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 105:190]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 245:330]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 385:470]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 385:470]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-    
-    elif n_block > 17 and n_block <= 21:
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 105:190]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 245:330]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 385:470]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 525:610]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-        
-        for i in range(0, n_block - 1):
-
-            img = image[690 + (i * 190):845 + (i * 190), 665:750]
-            read = read_answer(img, 5, debug = False)
-
-            if set(read) == {None}:
-                break
-
-            answers.append(read_answer(img, 5, debug = False))
-    
-    elif n_block > 21:
-        raise ValueError("n_block must be less than or equal to 20 blocks")
-
-    return [j for i in answers for j in i]
-    
     
 def id_block_read(image: np.ndarray, debug: bool = True) -> int:
     

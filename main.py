@@ -9,7 +9,8 @@ from tqdm import tqdm
 from rich import print
 from image_utils import id_block_read, find_paper, ans_block_read
 
-pass_score = 6
+pass_score = 5
+N_QUESTIONS  = 20
 
 start_time = time.process_time()
 
@@ -20,13 +21,13 @@ datasets = []
 
 print('Reading answers from the sheet...')
 
-for img in tqdm(imlist, unit = 'Sheet'):
+for img in tqdm(imlist, unit='Sheet'):
 
     image = cv2.imread(img)
 
     answer_sheet = cv2.resize(find_paper(image), (827, 1669))
-    student_id = id_block_read(answer_sheet, debug = False)
-    answers = ans_block_read(answer_sheet, 5)
+    student_id   = id_block_read(answer_sheet, debug=False)
+    answers      = ans_block_read(answer_sheet, n_questions=N_QUESTIONS)   # ← all 100 Qs
     
     if student_id == 0:
         correct_ans = answers
@@ -34,9 +35,10 @@ for img in tqdm(imlist, unit = 'Sheet'):
     data = {'id': student_id, 'answers': answers}
     datasets.append(data.copy())
 
-datasets = sorted(datasets, key = lambda data: data['id'])[1:]
+# Sort by ID and exclude the answer-key sheet (ID 0)
+datasets = sorted(datasets, key=lambda data: data['id'])[1:]
 
-print(f'Correct answers(ID = 0): {correct_ans}')
+print(f'Correct answers (ID = 0): {correct_ans}')
 print(datasets)
 cv2.destroyAllWindows()
 
@@ -48,14 +50,15 @@ for (idx, data) in enumerate(datasets):
         datasets[idx]['answers_check'].append(base == student)
         
 for data in datasets:
-    (_, count) = np.unique(data['answers_check'], return_counts = True)
-    data['correct'] = count[1]
-    data['incorrect'] = count[0]
+    unique, counts = np.unique(data['answers_check'], return_counts=True)
+    count_map = dict(zip(unique, counts))
+    data['correct']   = count_map.get(True,  0)
+    data['incorrect'] = count_map.get(False, 0)
     
 df = pd.DataFrame(datasets)
-df['pass'] = ["Pass" if d >= pass_score else "Not pass" for d in df['correct']]
+df['pass'] = ['Pass' if d >= pass_score else 'Not pass' for d in df['correct']]
 
-df.to_excel('out.xlsx', index = False)
+df.to_excel('out.xlsx', index=False)
 
 elapsed_time = time.process_time() - start_time
 
