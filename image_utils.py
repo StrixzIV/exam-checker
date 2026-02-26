@@ -188,7 +188,7 @@ def id_block_read(image: np.ndarray, debug: bool = True) -> int:
         Read the ID from the id section of the answer sheet image
     '''
     
-    img = image[340:625, 305:375]
+    img = image[350:625, 305:375]
         
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     inp = cv2.GaussianBlur(grey, ksize = (3, 3), sigmaX = 1)
