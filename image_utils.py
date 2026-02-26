@@ -3,40 +3,55 @@ import numpy as np
 
 from uuid import uuid4
 
-def biggest_contour(contours: np.ndarray) -> np.ndarray:
-    
-    contours = [contour for contour in contours if cv2.contourArea(contour) > 1000]
-    
-    if len(contours) > 0:
-        largest_contour = max(contours, key=cv2.contourArea)
-        peri = cv2.arcLength(largest_contour, True)
-        approx = cv2.approxPolyDP(largest_contour, 0.015 * peri, True)
-        
-        if len(approx) == 4:
-            return approx
-    
+def biggest_contour(contours: list) -> np.ndarray:
+
+    for contour in contours:
+
+        if cv2.contourArea(contour) > 1000:
+
+            peri = cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
+            
+            if len(approx) == 4:
+                return approx
+                
     return None
 
 
 def find_paper(image: np.ndarray) -> np.ndarray:
     
     '''
-        Find an answer sheet in the image and auto cropped
+        Find an answer sheet in the image and auto crop it.
     '''
-    
-    # define readed answersheet image output size
+    # define read answersheet image output size
     (max_width, max_height) = (827, 1669)
     
     img_original = image.copy()
     
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.bilateralFilter(gray, 20, 30, 30)
-    edged = cv2.Canny(gray, 10, 20)
+    
+    # 1. Standard blur to smooth out noise but retain document edges
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    # 2. Stronger Canny thresholds to ignore paper texture and focus on strong edges
+    edged = cv2.Canny(gray, 75, 200)
+
+    # 3. Dilate and erode to close any small gaps in the paper's outline
+    kernel = np.ones((5, 5), np.uint8)
+    edged = cv2.dilate(edged, kernel, iterations=1)
+    edged = cv2.erode(edged, kernel, iterations=1)
 
     (contours, _) = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Sort contours by area, largest first
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
     biggest = biggest_contour(contours)
+
+    # Safety catch in case no 4-point contour is found
+    if biggest is None:
+        print("Warning: Could not find paper outline. Returning original image.")
+        return cv2.resize(img_original, (max_width, max_height))
 
     cv2.drawContours(image, [biggest], -1, (0, 255, 0), 3)
 
@@ -63,36 +78,44 @@ def find_paper(image: np.ndarray) -> np.ndarray:
 
 
 def read_answer(roi: np.ndarray, n_questions: int, debug: bool = True) -> list[int]:
-    
     '''
         Read answer mark from a specific region of the answer sheet and return a result as a list.
     '''
-    
     grey = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    inp = cv2.GaussianBlur(grey, ksize = (15, 15), sigmaX = 1)
+    inp = cv2.GaussianBlur(grey, ksize=(3, 3), sigmaX=1)
 
-    (_, res) = cv2.threshold(inp, 185, 255, cv2.THRESH_BINARY)
+    (_, res) = cv2.threshold(inp, 150, 255, cv2.THRESH_BINARY_INV)
 
-    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 3)
-    res = cv2.dilate(res, kernel = (3, 3))
+    # Dialed down to a 3x3 kernel so lightly shaded pencil marks don't get accidentally erased
+    res = cv2.morphologyEx(res, cv2.MORPH_OPEN, np.ones((3, 3), dtype=np.uint8), iterations=1)
+    res = cv2.dilate(res, kernel=np.ones((3, 3), dtype=np.uint8), iterations=1)
     
     if debug:
-        cv2.imshow(str(uuid4()), res)
+        cv2.imshow('roi_debug', res)
         cv2.waitKey(0)
 
-    (contours, _) = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    (contours, _) = cv2.findContours(res, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     readed = []
 
-    for cnt in contours[::-1]:
+    for cnt in contours:
+        if cv2.contourArea(cnt) < 20:
+            continue
+            
+        (x, y, w, h) = cv2.boundingRect(cnt)
         
-        (x, y, _w, _h) = cv2.boundingRect(cnt)
+        # Calculate the exact center of the bubble instead of the top-left edge
+        cx = x + (w / 2.0)
+        cy = y + (h / 2.0)
         
         if debug:
-            print(x, y)
+            print(f"Mark center at cx:{cx}, cy:{cy}")
         
-        question_idx = int(y // 27)
-        choice_idx = (x - 1) // 20
+        # 147px total height / 5 questions = 29.4px per row
+        question_idx = int(cy / 29.4)
+        
+        # 85px total width / 4 choices = 21.25px per column
+        choice_idx = int(cx / 21.25)
 
         if question_idx < 0 or question_idx >= n_questions:
             continue
@@ -114,51 +137,25 @@ def ans_block_read(image: np.ndarray, n_questions: int = 100) -> list[int]:
     
     '''
         Read answers from all blocks of the main answer sheet.
-
-        The sheet is laid out as a grid:
-          - 5 columns  (each covering 20 questions)
-          - 4 row-groups per column (each covering 5 questions)
-        Total: 5 × 4 × 5 = 100 questions
-
-        Column x-ranges (left edge → right edge in the warped 827×1669 image):
-          Col 1 (Q  1-20 ): x 105:190
-          Col 2 (Q 21-40 ): x 245:330
-          Col 3 (Q 41-60 ): x 385:470
-          Col 4 (Q 61-80 ): x 525:610
-          Col 5 (Q 81-100): x 665:750
-
-        Row-group y-ranges (top → bottom):
-          Group 1 (rows  1- 5 per col): y  690:845
-          Group 2 (rows  6-10 per col): y  880:1035
-          Group 3 (rows 11-15 per col): y 1070:1225
-          Group 4 (rows 16-20 per col): y 1260:1415
-
-        n_questions: how many questions to read (default 100).
-                     Must be a multiple of 5 and <= 100.
     '''
-
     if n_questions > 100 or n_questions < 1:
         raise ValueError("n_questions must be between 1 and 100.")
 
-    # X pixel ranges for each of the 5 answer columns
+    # Shifted X-ranges strictly RIGHT (starting at 120 instead of 115 or 110)
+    # This safely dodges the printed numbers on the left for both scans and photos.
     col_x_ranges = [
-        (105, 190),   # Column 1: Q  1–20
-        (245, 330),   # Column 2: Q 21–40
-        (385, 470),   # Column 3: Q 41–60
-        (525, 610),   # Column 4: Q 61–80
-        (665, 750),   # Column 5: Q 81–100
+        (120, 205),   # Column 1
+        (260, 345),   # Column 2
+        (400, 485),   # Column 3
+        (540, 625),   # Column 4
+        (680, 765),   # Column 5
     ]
 
-    # Y pixel ranges for each of the 4 row-groups inside every column.
-    # We trim 8px off the top of each range to avoid capturing the horizontal
-    # separator line that sits at the very top of each group block — that line
-    # was being detected as a contour at y≈0, x≈0, corrupting question 1 in
-    # every block with a spurious choice of 0.
     row_y_ranges = [
-        ( 698,  845),  # Row-group 1: questions  1– 5 within each column
-        ( 888, 1035),  # Row-group 2: questions  6–10 within each column
-        (1078, 1225),  # Row-group 3: questions 11–15 within each column
-        (1268, 1415),  # Row-group 4: questions 16–20 within each column
+        ( 698,  845),  # Row-group 1
+        ( 888, 1035),  # Row-group 2
+        (1078, 1225),  # Row-group 3
+        (1268, 1415),  # Row-group 4
     ]
 
     answers = []
@@ -170,9 +167,10 @@ def ans_block_read(image: np.ndarray, n_questions: int = 100) -> list[int]:
                 break
 
             roi = image[y_start:y_end, x_start:x_end]
+            
+            # This calls your updated `read_answer` with the cx/cy logic
             block_answers = read_answer(roi, 5, debug=False)
 
-            # Stop early if the entire block is blank (no marks at all)
             if set(block_answers) == {None}:
                 answers.extend([None] * 5)
             else:
@@ -185,71 +183,83 @@ def ans_block_read(image: np.ndarray, n_questions: int = 100) -> list[int]:
 
     
 def id_block_read(image: np.ndarray, debug: bool = True) -> int:
-    
+
     '''
         Read the ID from the id section of the answer sheet image
     '''
     
-    img = image[340:625, 300:370]
-    
+    img = image[340:625, 305:375]
+        
     grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     inp = cv2.GaussianBlur(grey, ksize = (3, 3), sigmaX = 1)
 
-    (_, res) = cv2.threshold(inp, 178, 255, cv2.THRESH_BINARY)
+    (_, res) = cv2.threshold(inp, 150, 255, cv2.THRESH_BINARY_INV)
 
-    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), dtype = np.uint8), iterations = 4)
-    res = cv2.dilate(res, kernel = (5, 5), iterations = 3)
+    res = cv2.morphologyEx(res, cv2.MORPH_OPEN, np.ones((5, 5), dtype=np.uint8), iterations=1)
+    res = cv2.dilate(res, kernel=np.ones((3, 3), dtype=np.uint8), iterations=1)
 
     id_str = ''
+    
+    col_width = 23
 
-    for i in range(1, 4):
+    for i in range(3):
         
-        (contours, _) = cv2.findContours(res[:, (i - 1) * 21:i * 21], cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        col_img = res[:, i * col_width : (i + 1) * col_width]
+        
+        # RETR_EXTERNAL only grabs the outer shape of the blobs
+        (contours, _) = cv2.findContours(col_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         
         if debug:
-            cv2.imshow(str(uuid4()), res[:, (i - 1) * 21:i * 21])
+            from uuid import uuid4
+            cv2.imshow(str(uuid4()), col_img)
             cv2.waitKey(0)
         
-        for cnt in (contours[1:][::-1]):
+        # Filter out any tiny leftover noise specks by area
+        valid_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 20]
+        
+        if not valid_contours:
+            continue
             
-            if len(id_str) == 3:
-                break
+        # Grab the largest blob in this column (the filled bubble)
+        largest_cnt = max(valid_contours, key=cv2.contourArea)
+        (x, y, w, h) = cv2.boundingRect(largest_cnt)
+        
+        if debug:
+            print(f"Col {i} Y-coord: {y}")
+        
+        if y in range(0, 26):
+            id_str += '1'
             
-            (x, y, w, h) = cv2.boundingRect(cnt)
-            
-            if debug:
-                print(y)
-            
-            if y in range(0, 26):
-                id_str += '1'
-            
-            elif y in range(26, 51):
-                id_str += '2'
-                
-            elif y in range(51, 76):
-                id_str += '3'
-                
-            elif y in range(76, 101):
-                id_str += '4'
-                
-            elif y in range(101, 126):
-                id_str += '5'
-                
-            elif y in range(126, 151):
-                id_str += '6'
-                
-            elif y in range(151, 176):
-                id_str += '7'
-                
-            elif y in range(176, 201):
-                id_str += '8'
-                
-            elif y in range(201, 226):
-                id_str += '9'
-                
-            elif y in range(226, 261):
-                id_str += '0'
+        elif y in range(26, 51):
+            id_str += '2'
+        
+        elif y in range(51, 76):
+            id_str += '3'
+        
+        elif y in range(76, 101):
+            id_str += '4'
+        
+        elif y in range(101, 126):
+            id_str += '5'
+        
+        elif y in range(126, 151):
+            id_str += '6'
+        
+        elif y in range(151, 176):
+            id_str += '7'
+        
+        elif y in range(176, 201):
+            id_str += '8'
+        
+        elif y in range(201, 226):
+            id_str += '9'
+        
+        elif y in range(226, 285):
+            id_str += '0'
     
+    if id_str == '':
+        return 0
+        
     return int(id_str)
 
 
